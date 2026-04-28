@@ -30,7 +30,7 @@ type ProposalResource = LightspeedProposal & K8sResourceCommon;
 
 const columns: TableColumn<ProposalResource>[] = [
   { id: 'name', sort: 'metadata.name', title: 'Name' },
-  { id: 'workflow', sort: 'spec.workflow', title: 'Workflow' },
+  { id: 'template', sort: 'spec.templateRef.name', title: 'Template' },
   { id: 'phase', sort: 'status.phase', title: 'Phase' },
   { id: 'request', title: 'Request' },
   { id: 'namespace', sort: 'metadata.namespace', title: 'Namespace' },
@@ -80,8 +80,8 @@ const ProposalRow: React.FC<RowProps<ProposalResource>> = ({ activeColumnIDs, ob
           />
         </Link>
       </TableData>
-      <TableData activeColumnIDs={activeColumnIDs} id="workflow">
-        <Label color="blue">{obj.spec.workflow}</Label>
+      <TableData activeColumnIDs={activeColumnIDs} id="template">
+        <Label color="blue">{obj.spec.templateRef?.name ?? '(inline)'}</Label>
       </TableData>
       <TableData activeColumnIDs={activeColumnIDs} id="phase">
         <Label color={phase.color}>{phase.label}</Label>
@@ -105,7 +105,7 @@ const NoProposalsMsg: React.FC = () => {
     <EmptyState headingLevel="h2" icon={SearchIcon} titleText={t('No proposals')}>
       <EmptyStateBody>
         {t(
-          'Proposals are created by workflows or by user request. No proposals have been created yet.',
+          'Proposals are created by adapters or by user request. No proposals have been created yet.',
         )}
       </EmptyStateBody>
     </EmptyState>

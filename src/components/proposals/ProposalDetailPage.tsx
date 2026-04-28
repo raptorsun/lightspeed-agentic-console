@@ -257,7 +257,7 @@ const OverviewTab: React.FC<{ proposal: LightspeedProposal }> = ({ proposal }) =
   const { t } = useTranslation('plugin__lightspeed-agentic-console-plugin');
   const phase = getPhaseDisplay(proposal.status?.phase);
   const attempts = proposal.status?.previousAttempts;
-  const workflowOverride = proposal.spec.workflowOverride;
+  const templateName = proposal.spec.templateRef?.name ?? '(inline)';
   const sourceUrl = proposal.metadata.annotations?.['ols.openshift.io/source-url'];
   const sourceName = proposal.metadata.annotations?.['ols.openshift.io/source-name'] || t('Source');
 
@@ -285,9 +285,9 @@ const OverviewTab: React.FC<{ proposal: LightspeedProposal }> = ({ proposal }) =
                 </DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>
-                <DescriptionListTerm>{t('Workflow')}</DescriptionListTerm>
+                <DescriptionListTerm>{t('Template')}</DescriptionListTerm>
                 <DescriptionListDescription>
-                  <Label color="blue">{proposal.spec.workflow}</Label>
+                  <Label color="blue">{templateName}</Label>
                 </DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>
@@ -340,28 +340,6 @@ const OverviewTab: React.FC<{ proposal: LightspeedProposal }> = ({ proposal }) =
                   <DescriptionListTerm>{t('Attempt')}</DescriptionListTerm>
                   <DescriptionListDescription>
                     {proposal.status?.attempt}
-                  </DescriptionListDescription>
-                </DescriptionListGroup>
-              )}
-              {workflowOverride && (
-                <DescriptionListGroup>
-                  <DescriptionListTerm>{t('Workflow Override')}</DescriptionListTerm>
-                  <DescriptionListDescription>
-                    {workflowOverride.analysis?.skip && (
-                      <Label color="teal" isCompact>
-                        {t('Skip Analysis')}
-                      </Label>
-                    )}{' '}
-                    {workflowOverride.execution?.skip && (
-                      <Label color="teal" isCompact>
-                        {t('Skip Execution')}
-                      </Label>
-                    )}{' '}
-                    {workflowOverride.verification?.skip && (
-                      <Label color="teal" isCompact>
-                        {t('Skip Verification')}
-                      </Label>
-                    )}
                   </DescriptionListDescription>
                 </DescriptionListGroup>
               )}
@@ -965,7 +943,7 @@ const ProposalTab: React.FC<ProposalTabProps> = ({ proposal, approve, deny, inPr
   // Auto-collapse the log viewer once analysis data arrives
   const [logsExpanded, setLogsExpanded] = useAutoCollapseLogs(hasAnalysis);
 
-  const skipExecution = proposal.spec.workflowOverride?.execution?.skip;
+  const isAdvisory = proposal.status?.phase === 'AwaitingSync' || (!proposal.status?.steps?.execution);
 
   if (!hasAnalysis) {
     // Show live sandbox logs while analyzing
@@ -1003,7 +981,7 @@ const ProposalTab: React.FC<ProposalTabProps> = ({ proposal, approve, deny, inPr
           selectedIndex={localSelectedOption}
         />
       </StackItem>
-      {showApproval && skipExecution && (
+      {showApproval && isAdvisory && (
         <StackItem>
           <Alert isInline title={t('Execution is skipped for this proposal')} variant="info">
             {t(
@@ -1027,7 +1005,7 @@ const ProposalTab: React.FC<ProposalTabProps> = ({ proposal, approve, deny, inPr
                     onClick={() => setConfirmRetries(0)}
                     variant="danger"
                   >
-                    {skipExecution ? t('Acknowledge') : t('Approve')}
+                    {isAdvisory ? t('Acknowledge') : t('Approve')}
                   </Button>
                   <Dropdown
                     isOpen={retryDropdownOpen}
@@ -1541,7 +1519,7 @@ const ProposalDetailPage: React.FC = () => {
           </Flex>
         </FlexItem>
         <FlexItem>
-          <Label color="blue">{proposal.spec.workflow}</Label>
+          <Label color="blue">{proposal.spec.templateRef?.name ?? '(inline)'}</Label>
         </FlexItem>
         <FlexItem>
           <Label color={phase.color}>{phase.label}</Label>

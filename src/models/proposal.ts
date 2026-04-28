@@ -61,10 +61,26 @@ export type PreviousAttempt = {
   failureReason?: string;
 };
 
-export type WorkflowOverride = {
-  analysis?: { skip?: boolean; agent?: string };
-  execution?: { skip?: boolean; agent?: string };
-  verification?: { skip?: boolean; agent?: string };
+export type SkillsSource = {
+  image: string;
+  paths?: string[];
+};
+
+export type SecretRequirement = {
+  name: string;
+  description?: string;
+  mountAs: string;
+};
+
+export type ToolsSpec = {
+  skills?: SkillsSource[];
+  requiredSecrets?: SecretRequirement[];
+  outputSchema?: unknown;
+};
+
+export type ProposalStep = {
+  agent?: string;
+  tools?: ToolsSpec;
 };
 
 // Agent structured response types (used by step status and StructuredProposal component)
@@ -210,9 +226,12 @@ export type LightspeedProposal = {
   };
   spec: {
     request: string;
-    workflow: string;
+    templateRef?: { name: string };
     targetNamespaces?: string[];
-    workflowOverride?: WorkflowOverride;
+    tools?: ToolsSpec;
+    analysis?: ProposalStep;
+    execution?: ProposalStep;
+    verification?: ProposalStep;
     parentRef?: string;
     maxAttempts?: number;
   };

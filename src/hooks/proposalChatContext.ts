@@ -6,7 +6,7 @@ export function buildProposalChatConfig(proposal: LightspeedProposal): ChatConfi
     remediation: {
       name: proposal.metadata.name,
       namespace: proposal.metadata.namespace,
-      workflow: proposal.spec.workflow,
+      template: proposal.spec.templateRef?.name,
       request: proposal.spec.request,
     },
   };
