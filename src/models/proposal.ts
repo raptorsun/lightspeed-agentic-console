@@ -1,14 +1,14 @@
 import { K8sModel } from '@openshift-console/dynamic-plugin-sdk';
 
 export const LightspeedProposalModel: K8sModel = {
-  apiGroup: 'ols.openshift.io',
+  apiGroup: 'agentic.openshift.io',
   apiVersion: 'v1alpha1',
-  kind: 'LightspeedProposal',
-  plural: 'lightspeedproposals',
+  kind: 'Proposal',
+  plural: 'proposals',
   abbr: 'LSP',
   namespaced: true,
-  label: 'Lightspeed Proposal',
-  labelPlural: 'Lightspeed Proposals',
+  label: 'Proposal',
+  labelPlural: 'Proposals',
 };
 
 export const LightspeedProposalGVK = {
