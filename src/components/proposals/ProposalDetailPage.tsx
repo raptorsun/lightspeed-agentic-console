@@ -276,7 +276,7 @@ const OverviewTab: React.FC<{ proposal: LightspeedProposal }> = ({ proposal }) =
                     spaceItems={{ default: 'spaceItemsSm' }}
                   >
                     <FlexItem>
-                      <PhaseIcon phase={proposal.status?.phase} />
+                      <PhaseIcon phase={proposal.status?.phase} executionFailed={proposal.status?.steps?.execution?.success === false} verificationFailed={proposal.status?.steps?.verification?.success === false} />
                     </FlexItem>
                     <FlexItem>
                       <Label color={phase.color}>{phase.label}</Label>
@@ -693,6 +693,7 @@ const RemediationOptionCard: React.FC<{ option: RemediationOption }> = ({ option
                     ))}
                   </Stack>
                 </StackItem>
+                {verification.rollbackPlan && (
                 <StackItem>
                   <Title headingLevel="h4">{t('Rollback Plan')}</Title>
                   {typeof verification.rollbackPlan === 'object' ? (
@@ -712,6 +713,7 @@ const RemediationOptionCard: React.FC<{ option: RemediationOption }> = ({ option
                     </CodeBlock>
                   )}
                 </StackItem>
+                )}
               </Stack>
             </CardBody>
           </Card>
@@ -1005,7 +1007,7 @@ const ProposalTab: React.FC<ProposalTabProps> = ({ proposal, approve, deny, inPr
                     onClick={() => setConfirmRetries(0)}
                     variant="danger"
                   >
-                    {isAdvisory ? t('Acknowledge') : t('Approve')}
+                    {t('Approve')}
                   </Button>
                   <Dropdown
                     isOpen={retryDropdownOpen}
@@ -1244,7 +1246,7 @@ const VerificationTab: React.FC<{ proposal: LightspeedProposal; onEscalate?: () 
                                 <StackItem>
                                   <Flex alignItems={{ default: 'alignItemsCenter' }}>
                                     <FlexItem>
-                                      {check.passed ? (
+                                      {check.result === 'Passed' ? (
                                         <CheckCircleIcon color="var(--pf-t--color--green--default)" />
                                       ) : (
                                         <ExclamationCircleIcon color="var(--pf-t--color--red--default)" />
@@ -1254,8 +1256,8 @@ const VerificationTab: React.FC<{ proposal: LightspeedProposal; onEscalate?: () 
                                       <strong>{check.name}</strong>
                                     </FlexItem>
                                     <FlexItem>
-                                      <Label color={check.passed ? 'green' : 'red'} isCompact>
-                                        {check.passed ? t('Pass') : t('Fail')}
+                                      <Label color={check.result === 'Passed' ? 'green' : 'red'} isCompact>
+                                        {check.result === 'Passed' ? t('Pass') : t('Fail')}
                                       </Label>
                                     </FlexItem>
                                   </Flex>
@@ -1452,7 +1454,7 @@ const ProposalDetailPage: React.FC = () => {
               spaceItems={{ default: 'spaceItemsSm' }}
             >
               <FlexItem>
-                <PhaseIcon phase={proposal.status?.phase} />
+                <PhaseIcon phase={proposal.status?.phase} executionFailed={proposal.status?.steps?.execution?.success === false} verificationFailed={proposal.status?.steps?.verification?.success === false} />
               </FlexItem>
               <FlexItem>
                 <Title headingLevel="h1">{triggerName}</Title>
@@ -1511,7 +1513,7 @@ const ProposalDetailPage: React.FC = () => {
             spaceItems={{ default: 'spaceItemsSm' }}
           >
             <FlexItem>
-              <PhaseIcon phase={proposal.status?.phase} />
+              <PhaseIcon phase={proposal.status?.phase} executionFailed={proposal.status?.steps?.execution?.success === false} verificationFailed={proposal.status?.steps?.verification?.success === false} />
             </FlexItem>
             <FlexItem>
               <Title headingLevel="h1">{proposal.metadata.name}</Title>

@@ -12,7 +12,11 @@ import {
 
 import { ProposalPhase } from '../../models/proposal';
 
-const PhaseIcon: React.FC<{ phase?: ProposalPhase | string }> = ({ phase }) => {
+const PhaseIcon: React.FC<{
+  phase?: ProposalPhase | string;
+  executionFailed?: boolean;
+  verificationFailed?: boolean;
+}> = ({ phase, executionFailed, verificationFailed }) => {
   switch (phase) {
     case 'Pending':
       return <HourglassStartIcon />;
@@ -28,10 +32,16 @@ const PhaseIcon: React.FC<{ phase?: ProposalPhase | string }> = ({ phase }) => {
       return <InProgressIcon />;
     case 'AwaitingSync':
       return <SyncAltIcon color="var(--pf-t--global--icon--color--severity--info--default)" />;
-    case 'Completed':
+    case 'Completed': {
+      if (executionFailed || verificationFailed) {
+        return (
+          <ExclamationTriangleIcon color="var(--pf-t--global--icon--color--severity--warning--default)" />
+        );
+      }
       return (
         <CheckCircleIcon color="var(--pf-t--global--icon--color--severity--success--default)" />
       );
+    }
     case 'Failed':
       return (
         <TimesCircleIcon color="var(--pf-t--global--icon--color--severity--danger--default)" />

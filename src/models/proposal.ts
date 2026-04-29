@@ -193,7 +193,7 @@ export type VerificationCheck = {
   name: string;
   source: string;
   value: string;
-  passed: boolean;
+  result: 'Passed' | 'Failed';
 };
 
 export type VerificationStepStatus = {
@@ -203,6 +203,14 @@ export type VerificationStepStatus = {
   summary?: string;
   sandbox?: SandboxInfo;
   components?: AdapterComponent[];
+};
+
+export type ProposalStatus = {
+  phase?: ProposalPhase;
+  attempt?: number;
+  steps?: StepsStatus;
+  conditions?: ProposalCondition[];
+  previousAttempts?: PreviousAttempt[];
 };
 
 export type StepsStatus = {
@@ -235,13 +243,7 @@ export type LightspeedProposal = {
     parentRef?: string;
     maxAttempts?: number;
   };
-  status?: {
-    phase?: ProposalPhase;
-    attempt?: number;
-    steps?: StepsStatus;
-    conditions?: ProposalCondition[];
-    previousAttempts?: PreviousAttempt[];
-  };
+  status?: ProposalStatus;
 };
 
 // Display helpers
