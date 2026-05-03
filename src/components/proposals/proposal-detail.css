@@ -199,3 +199,22 @@
   color: var(--pf-t--global--text--color--regular);
 }
 /* stylelint-enable selector-disallowed-list */
+
+.ols-plugin__refine-actions {
+  margin-top: var(--pf-t--global--spacer--sm);
+}
+
+.ols-plugin__refine-textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--pf-t--global--border--color--default);
+  border-radius: var(--pf-t--global--border--radius--medium);
+  padding: var(--pf-t--global--spacer--sm) var(--pf-t--global--spacer--md);
+  font-family: var(--pf-t--global--font--family--text);
+  font-size: var(--pf-t--global--font--size--body--default);
+  line-height: var(--pf-t--global--font--line-height--body);
+  background: var(--pf-t--global--background--color--primary--default);
+  color: var(--pf-t--global--text--color--regular);
+  outline: none;
+  max-height: 200px;
+}

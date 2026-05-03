@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import {
   K8sResourceCommon,
+  k8sPatch,
   useK8sWatchResource,
 } from '@openshift-console/dynamic-plugin-sdk';
 import {
@@ -755,11 +756,19 @@ const RemediationOptionsView: React.FC<{
   options: RemediationOption[];
   selectedIndex?: number;
   onSelect?: (_index: number) => void;
-}> = ({ options, selectedIndex, onSelect }) => {
+  actionButtons?: React.ReactNode;
+}> = ({ options, selectedIndex, onSelect, actionButtons }) => {
   const { t } = useTranslation('plugin__lightspeed-agentic-console-plugin');
 
   if (options.length === 1) {
-    return <RemediationOptionCard option={options[0]} />;
+    return (
+      <Card>
+        <RemediationOptionCard option={options[0]} />
+        {actionButtons && (
+          <div style={{ padding: 'var(--pf-t--global--spacer--md)' }}>{actionButtons}</div>
+        )}
+      </Card>
+    );
   }
 
   return (
@@ -801,6 +810,11 @@ const RemediationOptionsView: React.FC<{
                   >
                     {t('Select this option')}
                   </Button>
+                )}
+                {isSelected && actionButtons && (
+                  <div style={{ marginTop: 'var(--pf-t--global--spacer--md)' }}>
+                    {actionButtons}
+                  </div>
                 )}
               </ExpandableSection>
             </Card>
@@ -982,10 +996,72 @@ const ProposalTab: React.FC<ProposalTabProps> = ({
   const sandboxPod = analysis?.sandbox?.claimName;
   const sandboxNs = analysis?.sandbox?.namespace || 'openshift-lightspeed';
   const isAnalyzing = phase === 'Analyzing' || phase === 'Pending';
+  const revisionPending =
+    proposal.spec.revision !== undefined &&
+    proposal.spec.revision > (analysis?.observedRevision ?? 0);
 
-  const [logsExpanded, setLogsExpanded] = useAutoCollapseLogs(hasAnalysis);
+  const [logsExpanded, setLogsExpanded] = useAutoCollapseLogs(hasAnalysis && !revisionPending);
 
   const isAdvisory = !proposal.spec.execution;
+
+  const [refineOpen, setRefineOpen] = React.useState(false);
+  const [refineFeedback, setRefineFeedback] = React.useState('');
+  const [refineInProgress, setRefineInProgress] = React.useState(false);
+  const [refineError, setRefineError] = React.useState<string | null>(null);
+
+  const submitRefine = React.useCallback(async () => {
+    if (!refineFeedback.trim()) return;
+    setRefineInProgress(true);
+    setRefineError(null);
+    try {
+      const currentRevision = proposal.spec.revision ?? 0;
+      const nextRevision = currentRevision + 1;
+      await k8sPatch({
+        data: [
+          {
+            op: proposal.spec.revision === undefined ? 'add' : 'replace',
+            path: '/spec/revision',
+            value: nextRevision,
+          },
+          {
+            op: proposal.spec.revisionFeedback === undefined ? 'add' : 'replace',
+            path: '/spec/revisionFeedback',
+            value: refineFeedback.trim(),
+          },
+        ],
+        model: LightspeedProposalModel,
+        resource: proposal,
+      });
+      setRefineOpen(false);
+      setRefineFeedback('');
+    } catch (err) {
+      setRefineError(err instanceof Error ? err.message : 'Failed to submit revision');
+    } finally {
+      setRefineInProgress(false);
+    }
+  }, [proposal, refineFeedback]);
+
+  if (revisionPending) {
+    return (
+      <Stack className="ols-plugin__proposal-tab-content" hasGutter>
+        <StackItem>
+          <Card>
+            <CardTitle>{t('Re-analyzing with feedback...')}</CardTitle>
+            <CardBody>
+              {proposal.spec.revisionFeedback && (
+                <Alert isInline title={t('Your feedback')} variant="info">
+                  {proposal.spec.revisionFeedback}
+                </Alert>
+              )}
+              {sandboxPod && (
+                <SandboxLogViewer podName={sandboxPod} podNamespace={sandboxNs} />
+              )}
+            </CardBody>
+          </Card>
+        </StackItem>
+      </Stack>
+    );
+  }
 
   if (!hasAnalysis) {
     if (analysisApproval.needsApproval && !sandboxPod) {
@@ -1025,16 +1101,11 @@ const ProposalTab: React.FC<ProposalTabProps> = ({
     );
   }
 
-  const proposalContent = (
-    <>
-      <StackItem>
-        <RemediationOptionsView
-          onSelect={showExecutionApproval ? setLocalSelectedOption : undefined}
-          options={options}
-          selectedIndex={localSelectedOption}
-        />
-      </StackItem>
-      {showExecutionApproval && isAdvisory && (
+  const busy = executionApproval.inProgress || refineInProgress;
+
+  const actionButtons = showExecutionApproval && optionSelected ? (
+    <Stack hasGutter>
+      {isAdvisory && (
         <StackItem>
           <Alert isInline title={t('Execution is skipped for this proposal')} variant="info">
             {t(
@@ -1043,107 +1114,150 @@ const ProposalTab: React.FC<ProposalTabProps> = ({
           </Alert>
         </StackItem>
       )}
-      {showExecutionApproval && optionSelected && (
+      <StackItem>
+        <Flex
+          alignItems={{ default: 'alignItemsCenter' }}
+          spaceItems={{ default: 'spaceItemsSm' }}
+        >
+          {confirmRetries === null ? (
+            <>
+              {agentNames.length > 0 && (
+                <FlexItem>
+                  <AgentDropdown
+                    agentNames={agentNames}
+                    defaultAgent={proposal.spec.execution?.agent}
+                    onSelect={setExecAgent}
+                    selected={execAgent}
+                  />
+                </FlexItem>
+              )}
+              <FlexItem className="ols-plugin__approve-split">
+                <Button
+                  className="ols-plugin__approve-split-main"
+                  isDisabled={executionApproval.inProgress}
+                  onClick={() => setConfirmRetries(0)}
+                  variant="danger"
+                >
+                  {t('Approve')}
+                </Button>
+                <Dropdown
+                  isOpen={retryDropdownOpen}
+                  isScrollable
+                  maxMenuHeight="200px"
+                  onOpenChange={setRetryDropdownOpen}
+                  onSelect={(_e, value) => {
+                    setRetryDropdownOpen(false);
+                    setConfirmRetries(value as number);
+                  }}
+                  toggle={(toggleRef) => (
+                    <Button
+                      aria-label={t('Approve with retries')}
+                      className="ols-plugin__approve-split-toggle"
+                      isDisabled={busy}
+                      onClick={() => setRetryDropdownOpen((o) => !o)}
+                      ref={toggleRef}
+                      variant="danger"
+                    >
+                      &#9660;
+                    </Button>
+                  )}
+                >
+                  <DropdownList>
+                    {RETRY_OPTIONS.map((n) => (
+                      <DropdownItem key={n} value={n}>
+                        {t('Approve with {{num}} retries', { num: n })}
+                      </DropdownItem>
+                    ))}
+                  </DropdownList>
+                </Dropdown>
+              </FlexItem>
+              <FlexItem>
+                <Button
+                  isDisabled={executionApproval.inProgress}
+                  isLoading={executionApproval.inProgress}
+                  onClick={() => executionApproval.deny()}
+                  variant="secondary"
+                >
+                  {t('Deny')}
+                </Button>
+              </FlexItem>
+              <FlexItem>
+                <Button
+                  isDisabled={executionApproval.inProgress}
+                  onClick={() => setRefineOpen((o) => !o)}
+                  variant="secondary"
+                >
+                  {t('Refine')}
+                </Button>
+              </FlexItem>
+            </>
+          ) : (
+            <>
+              <FlexItem>
+                <Button
+                  className="ols-plugin__confirm-sweep"
+                  isDisabled={executionApproval.inProgress}
+                  isLoading={executionApproval.inProgress}
+                  onClick={() =>
+                    executionApproval.approve({
+                      maxAttempts: confirmRetries,
+                      option: localSelectedOption,
+                      agent: execAgentOverride,
+                    })
+                  }
+                  variant="danger"
+                >
+                  {confirmRetries > 0
+                    ? t('Confirm Approve ({{num}} retries)', { num: confirmRetries })
+                    : t('Confirm Approve')}
+                </Button>
+              </FlexItem>
+              <FlexItem>
+                <Button
+                  isDisabled={executionApproval.inProgress}
+                  onClick={() => setConfirmRetries(null)}
+                  variant="link"
+                >
+                  {t('Cancel')}
+                </Button>
+              </FlexItem>
+            </>
+          )}
+        </Flex>
+      </StackItem>
+      {refineOpen && (
         <StackItem>
+          <textarea
+            aria-label={t('Revision feedback')}
+            className="ols-plugin__refine-textarea"
+            onChange={(e) => setRefineFeedback(e.target.value)}
+            placeholder={t('Describe what you want changed about this analysis...')}
+            rows={3}
+            value={refineFeedback}
+          />
           <Flex
-            alignItems={{ default: 'alignItemsCenter' }}
+            className="ols-plugin__refine-actions"
             spaceItems={{ default: 'spaceItemsSm' }}
           >
-            {confirmRetries === null ? (
-              <>
-                {agentNames.length > 0 && (
-                  <FlexItem>
-                    <AgentDropdown
-                      agentNames={agentNames}
-                      defaultAgent={proposal.spec.execution?.agent}
-                      onSelect={setExecAgent}
-                      selected={execAgent}
-                    />
-                  </FlexItem>
-                )}
-                <FlexItem className="ols-plugin__approve-split">
-                  <Button
-                    className="ols-plugin__approve-split-main"
-                    isDisabled={executionApproval.inProgress}
-                    onClick={() => setConfirmRetries(0)}
-                    variant="danger"
-                  >
-                    {t('Approve')}
-                  </Button>
-                  <Dropdown
-                    isOpen={retryDropdownOpen}
-                    isScrollable
-                    maxMenuHeight="200px"
-                    onOpenChange={setRetryDropdownOpen}
-                    onSelect={(_e, value) => {
-                      setRetryDropdownOpen(false);
-                      setConfirmRetries(value as number);
-                    }}
-                    toggle={(toggleRef) => (
-                      <Button
-                        aria-label={t('Approve with retries')}
-                        className="ols-plugin__approve-split-toggle"
-                        isDisabled={executionApproval.inProgress}
-                        onClick={() => setRetryDropdownOpen((o) => !o)}
-                        ref={toggleRef}
-                        variant="danger"
-                      >
-                        &#9660;
-                      </Button>
-                    )}
-                  >
-                    <DropdownList>
-                      {RETRY_OPTIONS.map((n) => (
-                        <DropdownItem key={n} value={n}>
-                          {t('Approve with {{num}} retries', { num: n })}
-                        </DropdownItem>
-                      ))}
-                    </DropdownList>
-                  </Dropdown>
-                </FlexItem>
-                <FlexItem>
-                  <Button
-                    isDisabled={executionApproval.inProgress}
-                    isLoading={executionApproval.inProgress}
-                    onClick={() => executionApproval.deny()}
-                    variant="secondary"
-                  >
-                    {t('Deny')}
-                  </Button>
-                </FlexItem>
-              </>
-            ) : (
-              <>
-                <FlexItem>
-                  <Button
-                    className="ols-plugin__confirm-sweep"
-                    isDisabled={executionApproval.inProgress}
-                    isLoading={executionApproval.inProgress}
-                    onClick={() =>
-                      executionApproval.approve({
-                        maxAttempts: confirmRetries,
-                        option: localSelectedOption,
-                        agent: execAgentOverride,
-                      })
-                    }
-                    variant="danger"
-                  >
-                    {confirmRetries > 0
-                      ? t('Confirm Approve ({{num}} retries)', { num: confirmRetries })
-                      : t('Confirm Approve')}
-                  </Button>
-                </FlexItem>
-                <FlexItem>
-                  <Button
-                    isDisabled={executionApproval.inProgress}
-                    onClick={() => setConfirmRetries(null)}
-                    variant="link"
-                  >
-                    {t('Cancel')}
-                  </Button>
-                </FlexItem>
-              </>
-            )}
+            <FlexItem>
+              <Button
+                isDisabled={!refineFeedback.trim() || refineInProgress}
+                isLoading={refineInProgress}
+                onClick={submitRefine}
+                variant="primary"
+              >
+                {t('Submit')}
+              </Button>
+            </FlexItem>
+            <FlexItem>
+              <Button
+                isDisabled={refineInProgress}
+                onClick={() => { setRefineOpen(false); setRefineError(null); }}
+                variant="link"
+              >
+                {t('Cancel')}
+              </Button>
+            </FlexItem>
           </Flex>
         </StackItem>
       )}
@@ -1154,7 +1268,25 @@ const ProposalTab: React.FC<ProposalTabProps> = ({
           </Alert>
         </StackItem>
       )}
-    </>
+      {refineError && (
+        <StackItem>
+          <Alert isInline title={t('Refine failed')} variant="danger">
+            {refineError}
+          </Alert>
+        </StackItem>
+      )}
+    </Stack>
+  ) : undefined;
+
+  const proposalContent = (
+    <StackItem>
+      <RemediationOptionsView
+        actionButtons={actionButtons}
+        onSelect={showExecutionApproval ? setLocalSelectedOption : undefined}
+        options={options}
+        selectedIndex={localSelectedOption}
+      />
+    </StackItem>
   );
 
   return (
