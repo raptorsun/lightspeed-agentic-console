@@ -43,6 +43,8 @@ import {
   AnalysisResultCR,
   AnalysisResultGVK,
   derivePhaseFromConditions,
+  EscalationResultCR,
+  EscalationResultGVK,
   ExecutionResultCR,
   ExecutionResultGVK,
   getPhaseDisplay,
@@ -1474,9 +1476,116 @@ const VerificationTab: React.FC<{
   );
 };
 
-type TabKey = 'overview' | 'proposal' | 'result' | 'verification';
+const EscalationTab: React.FC<{
+  proposal: LightspeedProposal;
+  escalationApproval: StageApprovalResult;
+  agentNames: string[];
+  latestEscalationResult?: EscalationResultCR;
+}> = ({ proposal, escalationApproval, agentNames, latestEscalationResult }) => {
+  const { t } = useTranslation('plugin__lightspeed-agentic-console-plugin');
+  const phase = derivePhaseFromConditions(proposal.status?.conditions as ProposalCondition[]);
+  const escalation = proposal.status?.steps?.escalation;
+  const hasResult = !!latestEscalationResult;
+  const sandboxPod = escalation?.sandbox?.claimName;
+  const sandboxNs = escalation?.sandbox?.namespace || 'openshift-lightspeed';
+  const isEscalating = phase === 'Escalating';
 
-const TAB_IDS: TabKey[] = ['overview', 'proposal', 'result', 'verification'];
+  const [logsExpanded, setLogsExpanded] = useAutoCollapseLogs(hasResult);
+
+  if (!hasResult && !sandboxPod) {
+    if (escalationApproval.needsApproval) {
+      return (
+        <ApprovalCard
+          agentNames={agentNames}
+          approval={escalationApproval}
+          approveLabel={t('Approve Escalation')}
+          defaultAgent={proposal.spec.analysis?.agent}
+          message={t('Escalation requires approval before it can proceed. The agent will research the issue and draft a support case.')}
+        />
+      );
+    }
+
+    const message = isEscalating
+      ? t('Waiting for escalation sandbox...')
+      : t('No escalation result yet.');
+    return (
+      <Card className="ols-plugin__proposal-tab-content">
+        <CardBody>{message}</CardBody>
+      </Card>
+    );
+  }
+
+  return (
+    <Stack className="ols-plugin__proposal-tab-content" hasGutter>
+      {sandboxPod && (
+        <StackItem>
+          {hasResult ? (
+            <ExpandableSection
+              isExpanded={logsExpanded}
+              onToggle={(_e, expanded) => setLogsExpanded(expanded)}
+              toggleText={logsExpanded ? t('Hide escalation logs') : t('Show escalation logs')}
+            >
+              <SandboxLogViewer podName={sandboxPod} podNamespace={sandboxNs} />
+            </ExpandableSection>
+          ) : (
+            <Card>
+              <CardTitle>{t('Escalating...')}</CardTitle>
+              <CardBody>
+                <SandboxLogViewer podName={sandboxPod} podNamespace={sandboxNs} />
+              </CardBody>
+            </Card>
+          )}
+        </StackItem>
+      )}
+      {latestEscalationResult && (
+        <StackItem>
+          <Card>
+            <CardTitle>
+              <Flex
+                alignItems={{ default: 'alignItemsCenter' }}
+                spaceItems={{ default: 'spaceItemsSm' }}
+              >
+                <FlexItem>{t('Escalation Result')}</FlexItem>
+                <FlexItem>
+                  <Label color={latestEscalationResult.success ? 'green' : 'red'}>
+                    {latestEscalationResult.success ? t('Completed') : t('Failed')}
+                  </Label>
+                </FlexItem>
+              </Flex>
+            </CardTitle>
+            <CardBody>
+              <Stack hasGutter>
+                {latestEscalationResult.summary && (
+                  <StackItem>
+                    <MarkdownText content={latestEscalationResult.summary} />
+                  </StackItem>
+                )}
+                {latestEscalationResult.content && (
+                  <StackItem>
+                    <ExpandableSection toggleText={t('Full escalation content')}>
+                      <MarkdownText content={latestEscalationResult.content} />
+                    </ExpandableSection>
+                  </StackItem>
+                )}
+                {latestEscalationResult.failureReason && (
+                  <StackItem>
+                    <Alert isInline title={t('Failure reason')} variant="danger">
+                      {latestEscalationResult.failureReason}
+                    </Alert>
+                  </StackItem>
+                )}
+              </Stack>
+            </CardBody>
+          </Card>
+        </StackItem>
+      )}
+    </Stack>
+  );
+};
+
+type TabKey = 'overview' | 'proposal' | 'result' | 'verification' | 'escalation';
+
+const TAB_IDS: TabKey[] = ['overview', 'proposal', 'result', 'verification', 'escalation'];
 
 const TriggerOptionsView: React.FC<{ options: RemediationOption[] }> = ({ options }) => {
   if (options.length === 1 && options[0].components?.length) {
@@ -1618,6 +1727,17 @@ const ProposalDetailPage: React.FC = () => {
   );
   const [verificationResults] = useK8sWatchResource<VerificationResultCR[]>(verificationResultsConfig);
 
+  const escalationResultsConfig = React.useMemo(
+    () => name ? {
+      groupVersionKind: EscalationResultGVK,
+      namespace: ns,
+      selector: resultLabelSelector,
+      isList: true,
+    } : null,
+    [name, ns, resultLabelSelector],
+  );
+  const [escalationResults] = useK8sWatchResource<EscalationResultCR[]>(escalationResultsConfig);
+
   // Helper: find the result CR referenced by the latest StepResultRef
   const getLatestResult = React.useCallback(
     <T extends { metadata: { name: string } }>(
@@ -1655,6 +1775,14 @@ const ProposalDetailPage: React.FC = () => {
     [verificationResults, proposal?.status?.steps?.verification?.results, getLatestResult],
   );
 
+  const latestEscalationResult = React.useMemo(
+    () => getLatestResult(
+      Array.isArray(escalationResults) ? escalationResults : undefined,
+      proposal?.status?.steps?.escalation?.results,
+    ),
+    [escalationResults, proposal?.status?.steps?.escalation?.results, getLatestResult],
+  );
+
   const currentPhase = derivePhaseFromConditions(proposal?.status?.conditions as ProposalCondition[]);
 
   const activePhaseTab: TabKey | null = React.useMemo(() => {
@@ -1666,6 +1794,8 @@ const ProposalDetailPage: React.FC = () => {
         return 'result';
       case 'Verifying':
         return 'verification';
+      case 'Escalating':
+        return 'escalation';
       default:
         return null;
     }
@@ -1674,16 +1804,19 @@ const ProposalDetailPage: React.FC = () => {
   const analysisApproval = useStageApproval(proposal, approval, 'Analysis', currentPhase);
   const executionApproval = useStageApproval(proposal, approval, 'Execution', currentPhase);
   const verificationApproval = useStageApproval(proposal, approval, 'Verification', currentPhase);
+  const escalationApproval = useStageApproval(proposal, approval, 'Escalation', currentPhase);
   const actionError =
     approvalError?.message ||
     analysisApproval.error ||
     executionApproval.error ||
-    verificationApproval.error;
+    verificationApproval.error ||
+    escalationApproval.error;
   const clearError = React.useCallback(() => {
     analysisApproval.clearError();
     executionApproval.clearError();
     verificationApproval.clearError();
-  }, [analysisApproval.clearError, executionApproval.clearError, verificationApproval.clearError]);
+    escalationApproval.clearError();
+  }, [analysisApproval.clearError, executionApproval.clearError, verificationApproval.clearError, escalationApproval.clearError]);
   const [escalateOpen, setEscalateOpen] = React.useState(false);
 
   if (!loaded) {
@@ -1776,7 +1909,12 @@ const ProposalDetailPage: React.FC = () => {
   }
 
   const isCmoAlert = isCmoSource && !isTriggerBootstrap;
-  const visibleTabs = isCmoAlert ? TAB_IDS.filter((id) => id !== 'overview') : TAB_IDS;
+  const hasEscalation = proposal?.status?.conditions?.some((c: ProposalCondition) => c.type === 'Escalated');
+  const visibleTabs = TAB_IDS.filter((id) => {
+    if (id === 'overview' && isCmoAlert) return false;
+    if (id === 'escalation' && !hasEscalation) return false;
+    return true;
+  });
   const effectiveTab = isCmoAlert && activeTab === 'overview' ? 'proposal' : activeTab;
 
   const tabLabels: Record<TabKey, string> = {
@@ -1784,6 +1922,7 @@ const ProposalDetailPage: React.FC = () => {
     proposal: t('Proposal'),
     result: t('Execution'),
     verification: t('Verification'),
+    escalation: t('Escalation'),
   };
 
   const tabNeedsApproval: Record<TabKey, boolean> = {
@@ -1791,6 +1930,7 @@ const ProposalDetailPage: React.FC = () => {
     proposal: analysisApproval.needsApproval || executionApproval.needsApproval,
     result: false,
     verification: verificationApproval.needsApproval,
+    escalation: escalationApproval.needsApproval,
   };
 
   return (
@@ -1910,6 +2050,14 @@ const ProposalDetailPage: React.FC = () => {
             onEscalate={() => setEscalateOpen(true)}
             proposal={proposal}
             verificationApproval={verificationApproval}
+          />
+        )}
+        {effectiveTab === 'escalation' && (
+          <EscalationTab
+            agentNames={agentNames}
+            escalationApproval={escalationApproval}
+            latestEscalationResult={latestEscalationResult}
+            proposal={proposal}
           />
         )}
       </div>
