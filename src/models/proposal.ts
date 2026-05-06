@@ -313,7 +313,6 @@ export type RemediationOption = {
 
 export type AnalysisStepStatus = {
   phase?: StepPhase;
-  selectedOption?: number;
   sandbox?: SandboxInfo;
   conditions?: ProposalCondition[];
   results?: StepResultRef[];

@@ -922,12 +922,13 @@ const ProposalTab: React.FC<ProposalTabProps> = ({
   const [confirmRetries, setConfirmRetries] = React.useState<number | null>(null);
   const [retryDropdownOpen, setRetryDropdownOpen] = React.useState(false);
   const [localSelectedOption, setLocalSelectedOption] = React.useState<number | undefined>(
-    analysis?.selectedOption ?? (options.length === 1 ? 0 : undefined),
+    options.length === 1 ? 0 : undefined,
   );
   React.useEffect(() => {
-    const serverSelected = analysis?.selectedOption ?? (options.length === 1 ? 0 : undefined);
-    setLocalSelectedOption((prev) => (prev === serverSelected ? prev : serverSelected));
-  }, [analysis?.selectedOption, options.length]);
+    if (options.length === 1) {
+      setLocalSelectedOption(0);
+    }
+  }, [options.length]);
   const optionSelected = localSelectedOption !== undefined;
 
   React.useEffect(() => {
