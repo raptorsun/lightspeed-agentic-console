@@ -230,7 +230,6 @@ export type SecretRequirement = {
 export type ToolsSpec = {
   skills?: SkillsSource[];
   requiredSecrets?: SecretRequirement[];
-  outputSchema?: unknown;
 };
 
 export type ProposalStep = {
@@ -307,7 +306,7 @@ export type RemediationOption = {
   proposal: AgentProposal;
   verification?: AgentVerification;
   rbac?: AgentRbac;
-  components?: AdapterComponent[];
+  components?: unknown;
 };
 
 // Step status types — typed fields on status.steps
@@ -391,6 +390,7 @@ export type LightspeedProposal = {
   spec: {
     request: string;
     targetNamespaces?: string[];
+    outputSchema?: unknown;
     tools?: ToolsSpec;
     analysis?: ProposalStep;
     execution?: ProposalStep;
@@ -420,7 +420,6 @@ export type AnalysisResultCR = {
   status?: {
     conditions?: ResultCondition[];
     options?: RemediationOption[];
-    components?: AdapterComponent[];
     sandbox?: SandboxInfo;
     failureReason?: string;
   };

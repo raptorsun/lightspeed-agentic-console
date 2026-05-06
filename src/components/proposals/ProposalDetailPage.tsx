@@ -85,16 +85,19 @@ const KNOWN_COMPONENT_TYPES = new Set([
   'cmo_trigger_proposal',
 ]);
 
-const AdapterComponents: React.FC<{ components?: AdapterComponent[] }> = ({ components }) => {
-  if (!components?.length) {
+const AdapterComponents: React.FC<{ components?: unknown }> = ({ components }) => {
+  if (!components) {
     return null;
   }
+  const items: AdapterComponent[] = Array.isArray(components)
+    ? components
+    : [components as AdapterComponent];
   return (
     <Stack hasGutter>
-      {components.map((comp, i) => (
+      {items.map((comp, i) => (
         <StackItem key={i}>
-          {KNOWN_COMPONENT_TYPES.has(comp.type) ? (
-            <DynamicComponent props={comp} type={comp.type} />
+          {typeof comp === 'object' && comp !== null && 'type' in comp && KNOWN_COMPONENT_TYPES.has((comp as AdapterComponent).type) ? (
+            <DynamicComponent props={comp as AdapterComponent} type={(comp as AdapterComponent).type} />
           ) : (
             <Card isCompact>
               <CardBody>
@@ -1570,7 +1573,7 @@ type TabKey = 'overview' | 'proposal' | 'result' | 'verification' | 'escalation'
 const TAB_IDS: TabKey[] = ['overview', 'proposal', 'result', 'verification', 'escalation'];
 
 const TriggerOptionsView: React.FC<{ options: RemediationOption[] }> = ({ options }) => {
-  if (options.length === 1 && options[0].components?.length) {
+  if (options.length === 1 && options[0].components) {
     return <AdapterComponents components={options[0].components} />;
   }
   return (
