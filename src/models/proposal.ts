@@ -407,21 +407,19 @@ export type ResultCondition = {
   message?: string;
 };
 
-export type ResultStatus = {
-  conditions?: ResultCondition[];
-};
-
 export type AnalysisResultCR = {
   apiVersion: string;
   kind: string;
   metadata: { name: string; namespace: string; creationTimestamp?: string };
   proposalName: string;
   attempt: number;
-  options?: RemediationOption[];
-  components?: AdapterComponent[];
-  sandbox?: SandboxInfo;
-  failureReason?: string;
-  status?: ResultStatus;
+  status?: {
+    conditions?: ResultCondition[];
+    options?: RemediationOption[];
+    components?: AdapterComponent[];
+    sandbox?: SandboxInfo;
+    failureReason?: string;
+  };
 };
 
 export type ExecutionResultCR = {
@@ -431,11 +429,13 @@ export type ExecutionResultCR = {
   proposalName: string;
   attempt: number;
   retryIndex: number;
-  actionsTaken?: ExecutionActionTaken[];
-  verification?: ExecutionVerification;
-  sandbox?: SandboxInfo;
-  failureReason?: string;
-  status?: ResultStatus;
+  status?: {
+    conditions?: ResultCondition[];
+    actionsTaken?: ExecutionActionTaken[];
+    verification?: ExecutionVerification;
+    sandbox?: SandboxInfo;
+    failureReason?: string;
+  };
 };
 
 export type VerificationResultCR = {
@@ -445,11 +445,13 @@ export type VerificationResultCR = {
   proposalName: string;
   attempt: number;
   retryIndex: number;
-  checks?: VerificationCheck[];
-  summary?: string;
-  sandbox?: SandboxInfo;
-  failureReason?: string;
-  status?: ResultStatus;
+  status?: {
+    conditions?: ResultCondition[];
+    checks?: VerificationCheck[];
+    summary?: string;
+    sandbox?: SandboxInfo;
+    failureReason?: string;
+  };
 };
 
 export type EscalationResultCR = {
@@ -458,11 +460,13 @@ export type EscalationResultCR = {
   metadata: { name: string; namespace: string; creationTimestamp?: string };
   proposalName: string;
   attempt: number;
-  summary?: string;
-  content?: string;
-  sandbox?: SandboxInfo;
-  failureReason?: string;
-  status?: ResultStatus;
+  status?: {
+    conditions?: ResultCondition[];
+    summary?: string;
+    content?: string;
+    sandbox?: SandboxInfo;
+    failureReason?: string;
+  };
 };
 
 type AnyResultCR = AnalysisResultCR | ExecutionResultCR | VerificationResultCR | EscalationResultCR;

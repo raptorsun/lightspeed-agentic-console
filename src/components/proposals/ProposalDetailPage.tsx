@@ -802,13 +802,13 @@ const StructuredResult: React.FC<{ data: ExecutionResultCR }> = ({ data }) => {
         </Card>
       </StackItem>
 
-      {(data.actionsTaken?.length ?? 0) > 0 && (
+      {(data.status?.actionsTaken?.length ?? 0) > 0 && (
         <StackItem>
           <Card>
             <CardTitle>{t('Actions Taken')}</CardTitle>
             <CardBody>
               <Stack hasGutter>
-                {data.actionsTaken!.map((action, i) => (
+                {data.status?.actionsTaken!.map((action, i) => (
                   <StackItem key={i}>
                     <Card isCompact isPlain>
                       <CardBody>
@@ -869,31 +869,31 @@ const StructuredResult: React.FC<{ data: ExecutionResultCR }> = ({ data }) => {
         </StackItem>
       )}
 
-      {data.verification && (
+      {data.status?.verification && (
         <StackItem>
           <Card>
             <CardTitle>
               <Flex alignItems={{ default: 'alignItemsCenter' }}>
                 <FlexItem>
-                  {data.verification.conditionOutcome === 'Improved' ? (
+                  {data.status?.verification.conditionOutcome === 'Improved' ? (
                     <CheckCircleIcon color="var(--pf-t--color--green--default)" />
-                  ) : data.verification.conditionOutcome === 'Degraded' ? (
+                  ) : data.status?.verification.conditionOutcome === 'Degraded' ? (
                     <ExclamationCircleIcon color="var(--pf-t--color--red--default)" />
                   ) : (
                     <ExclamationCircleIcon color="var(--pf-t--color--yellow--default)" />
                   )}
                 </FlexItem>
                 <FlexItem>
-                  {data.verification.conditionOutcome === 'Improved'
+                  {data.status?.verification.conditionOutcome === 'Improved'
                     ? t('Condition Improved')
-                    : data.verification.conditionOutcome === 'Degraded'
+                    : data.status?.verification.conditionOutcome === 'Degraded'
                       ? t('Condition Degraded')
                       : t('Condition Unchanged')}
                 </FlexItem>
               </Flex>
             </CardTitle>
             <CardBody>
-              <MarkdownText content={data.verification.summary} />
+              <MarkdownText content={data.status?.verification.summary} />
             </CardBody>
           </Card>
         </StackItem>
@@ -920,7 +920,7 @@ const ProposalTab: React.FC<ProposalTabProps> = ({
 }) => {
   const { t } = useTranslation('plugin__lightspeed-agentic-console-plugin');
   const analysis = proposal.status?.steps?.analysis;
-  const options = latestAnalysisResult?.options ?? [];
+  const options = latestAnalysisResult?.status?.options ?? [];
   const hasAnalysis = options.length > 0;
   const phase = derivePhaseFromConditions(proposal.status?.conditions as ProposalCondition[]);
   const showExecutionApproval = executionApproval.needsApproval && hasAnalysis;
@@ -1397,15 +1397,15 @@ const VerificationTab: React.FC<{
             </CardTitle>
             <CardBody>
               <Stack hasGutter>
-                {latestVerificationResult.summary && (
+                {latestVerificationResult.status?.summary && (
                   <StackItem>
-                    <MarkdownText content={latestVerificationResult.summary} />
+                    <MarkdownText content={latestVerificationResult.status?.summary} />
                   </StackItem>
                 )}
-                {latestVerificationResult.checks && latestVerificationResult.checks.length > 0 && (
+                {latestVerificationResult.status?.checks && latestVerificationResult.status?.checks.length > 0 && (
                   <StackItem>
                     <Stack hasGutter>
-                      {latestVerificationResult.checks.map((check, i) => (
+                      {latestVerificationResult.status?.checks.map((check, i) => (
                         <StackItem key={i}>
                           <Card isCompact isPlain>
                             <CardBody>
@@ -1542,22 +1542,22 @@ const EscalationTab: React.FC<{
             </CardTitle>
             <CardBody>
               <Stack hasGutter>
-                {latestEscalationResult.summary && (
+                {latestEscalationResult.status?.summary && (
                   <StackItem>
-                    <MarkdownText content={latestEscalationResult.summary} />
+                    <MarkdownText content={latestEscalationResult.status?.summary} />
                   </StackItem>
                 )}
-                {latestEscalationResult.content && (
+                {latestEscalationResult.status?.content && (
                   <StackItem>
                     <ExpandableSection toggleText={t('Full escalation content')}>
-                      <MarkdownText content={latestEscalationResult.content} />
+                      <MarkdownText content={latestEscalationResult.status?.content} />
                     </ExpandableSection>
                   </StackItem>
                 )}
-                {latestEscalationResult.failureReason && (
+                {latestEscalationResult.status?.failureReason && (
                   <StackItem>
                     <Alert isInline title={t('Failure reason')} variant="danger">
-                      {latestEscalationResult.failureReason}
+                      {latestEscalationResult.status?.failureReason}
                     </Alert>
                   </StackItem>
                 )}
@@ -1838,7 +1838,7 @@ const ProposalDetailPage: React.FC = () => {
     const triggerName =
       proposal.metadata?.labels?.['ols.openshift.io/trigger-name'] || proposal.metadata.name;
     const analysis = proposal.status?.steps?.analysis;
-    const triggerOptions = latestAnalysisResult?.options ?? [];
+    const triggerOptions = latestAnalysisResult?.status?.options ?? [];
     const sandboxPod = analysis?.sandbox?.claimName;
     const sandboxNs = analysis?.sandbox?.namespace || 'openshift-lightspeed';
     const isAnalyzing =
