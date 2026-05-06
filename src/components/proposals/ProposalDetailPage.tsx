@@ -674,23 +674,23 @@ const RemediationOptionCard: React.FC<{ option: RemediationOption }> = ({ option
                     ))}
                   </Stack>
                 </StackItem>
-                {verification.rollbackPlan && (
+                {proposal?.rollbackPlan && (
                   <StackItem>
                     <Title headingLevel="h4">{t('Rollback Plan')}</Title>
-                    {typeof verification.rollbackPlan === 'object' ? (
+                    {typeof proposal.rollbackPlan === 'object' ? (
                       <Stack hasGutter>
                         <StackItem>
-                          <MarkdownText content={verification.rollbackPlan.description} />
+                          <MarkdownText content={proposal.rollbackPlan.description} />
                         </StackItem>
                         <StackItem>
                           <CodeBlock>
-                            <CodeBlockCode>{verification.rollbackPlan.command}</CodeBlockCode>
+                            <CodeBlockCode>{proposal.rollbackPlan.command}</CodeBlockCode>
                           </CodeBlock>
                         </StackItem>
                       </Stack>
                     ) : (
                       <CodeBlock>
-                        <CodeBlockCode>{verification.rollbackPlan}</CodeBlockCode>
+                        <CodeBlockCode>{proposal.rollbackPlan}</CodeBlockCode>
                       </CodeBlock>
                     )}
                   </StackItem>

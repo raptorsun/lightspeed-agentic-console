@@ -253,6 +253,7 @@ export type AgentProposal = {
   risk: string;
   reversible: boolean;
   estimatedImpact?: string;
+  rollbackPlan?: AgentRollbackPlan | string;
 };
 
 export type VerificationStep = {
@@ -270,7 +271,6 @@ export type AgentRollbackPlan = {
 export type AgentVerification = {
   description: string;
   steps: VerificationStep[];
-  rollbackPlan: AgentRollbackPlan | string;
 };
 
 export type PermissionRule = {
