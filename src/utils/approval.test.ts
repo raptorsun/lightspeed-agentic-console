@@ -48,7 +48,7 @@ describe('getStageStatus', () => {
   });
 
   it('returns denied when stage has denied=true', () => {
-    const approval = makeApproval([{ type: 'Analysis', denied: true, analysis: {} }]);
+    const approval = makeApproval([{ type: 'Analysis', decision: 'Denied', analysis: {} }]);
     expect(getStageStatus(approval, 'Analysis')).toBe('denied');
   });
 });
@@ -60,7 +60,7 @@ describe('stageNeedsApproval', () => {
   });
 
   it('returns false when stage is denied', () => {
-    const approval = makeApproval([{ type: 'Analysis', denied: true, analysis: {} }]);
+    const approval = makeApproval([{ type: 'Analysis', decision: 'Denied', analysis: {} }]);
     expect(stageNeedsApproval(approval, 'Analysis', undefined, phase())).toBe(false);
   });
 
@@ -158,10 +158,10 @@ describe('buildApprovalPatch', () => {
     ]);
   });
 
-  it('sets denied=true for denial', () => {
+  it('sets decision=Denied for denial', () => {
     const patches = buildApprovalPatch(makeApproval(), 'Analysis', true);
     expect(patches[0].value).toEqual(
-      expect.arrayContaining([expect.objectContaining({ denied: true })]),
+      expect.arrayContaining([expect.objectContaining({ decision: 'Denied' })]),
     );
   });
 

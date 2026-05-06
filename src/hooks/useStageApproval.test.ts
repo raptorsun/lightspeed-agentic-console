@@ -5,7 +5,6 @@ import { k8sPatch } from '@openshift-console/dynamic-plugin-sdk';
 import {
   LightspeedProposal,
   LightspeedProposalApprovalModel,
-  LightspeedProposalModel,
 } from '../models/proposal';
 import { useStageApproval } from './useStageApproval';
 import { makeApproval } from '../test-helpers';
@@ -65,7 +64,7 @@ describe('useStageApproval', () => {
     });
   });
 
-  it('approve with maxAttempts patches Proposal spec first', async () => {
+  it('approve with maxAttempts includes it in ExecutionApproval patch', async () => {
     const proposal = makeProposal();
     const approval = makeApproval();
     const { result } = renderHook(() => useStageApproval(proposal, approval, 'Execution'));
@@ -74,18 +73,13 @@ describe('useStageApproval', () => {
       await result.current.approve({ maxAttempts: 3, option: 0 });
     });
 
-    expect(mockK8sPatch).toHaveBeenCalledTimes(2);
-    expect(mockK8sPatch).toHaveBeenNthCalledWith(1, {
-      data: [{ op: 'add', path: '/spec/maxAttempts', value: 3 }],
-      model: LightspeedProposalModel,
-      resource: proposal,
-    });
-    expect(mockK8sPatch).toHaveBeenNthCalledWith(2, {
+    expect(mockK8sPatch).toHaveBeenCalledTimes(1);
+    expect(mockK8sPatch).toHaveBeenCalledWith({
       data: [
         {
           op: 'add',
           path: '/spec/stages',
-          value: [{ type: 'Execution', execution: { option: 0 } }],
+          value: [{ type: 'Execution', execution: { option: 0, maxAttempts: 3 } }],
         },
       ],
       model: LightspeedProposalApprovalModel,
@@ -93,7 +87,7 @@ describe('useStageApproval', () => {
     });
   });
 
-  it('deny calls k8sPatch with denied=true', async () => {
+  it('deny calls k8sPatch with decision=Denied', async () => {
     const approval = makeApproval();
     const { result } = renderHook(() => useStageApproval(makeProposal(), approval, 'Analysis'));
 
@@ -106,7 +100,7 @@ describe('useStageApproval', () => {
         {
           op: 'add',
           path: '/spec/stages',
-          value: [{ type: 'Analysis', denied: true, analysis: {} }],
+          value: [{ type: 'Analysis', decision: 'Denied', analysis: {} }],
         },
       ],
       model: LightspeedProposalApprovalModel,

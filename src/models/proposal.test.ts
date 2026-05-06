@@ -72,14 +72,14 @@ describe('derivePhaseFromConditions', () => {
     ).toBe('Executing');
   });
 
-  it('returns Analyzing for Verified=False with RetriesExhausted reason', () => {
+  it('returns Failed for Verified=False with RetriesExhausted without Escalated condition', () => {
     expect(
       derivePhaseFromConditions([
         cond('Analyzed', 'True'),
         cond('Executed', 'True'),
         cond('Verified', 'False', 'RetriesExhausted'),
       ]),
-    ).toBe('Analyzing');
+    ).toBe('Failed');
   });
 
   it('returns Failed for Verified=False with other reason', () => {

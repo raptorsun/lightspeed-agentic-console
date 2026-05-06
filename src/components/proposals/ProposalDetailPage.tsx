@@ -124,7 +124,7 @@ function useAutoCollapseLogs(hasData: boolean): [boolean, (_v: boolean) => void]
 }
 
 const CONFIRM_RESET_MS = 5000;
-const MAX_RETRIES = 20;
+const MAX_RETRIES = 3;
 const RETRY_OPTIONS = Array.from({ length: MAX_RETRIES }, (_, i) => i + 1);
 
 const AgentDropdown: React.FC<{
@@ -899,7 +899,6 @@ const StructuredResult: React.FC<{ data: ExecutionResultCR }> = ({ data }) => {
         </StackItem>
       )}
 
-      <AdapterComponents components={data.components} />
     </Stack>
   );
 };
@@ -953,9 +952,10 @@ const ProposalTab: React.FC<ProposalTabProps> = ({
   const sandboxPod = analysis?.sandbox?.claimName;
   const sandboxNs = analysis?.sandbox?.namespace || 'openshift-lightspeed';
   const isAnalyzing = phase === 'Analyzing' || phase === 'Pending';
+  const generation = proposal.metadata?.generation ?? 0;
   const revisionPending =
-    proposal.spec.revision !== undefined &&
-    proposal.spec.revision > (analysis?.observedRevision ?? 0);
+    !!proposal.spec.revisionFeedback &&
+    generation > (analysis?.observedGeneration ?? 0);
 
   const [logsExpanded, setLogsExpanded] = useAutoCollapseLogs(hasAnalysis && !revisionPending);
 
@@ -971,15 +971,8 @@ const ProposalTab: React.FC<ProposalTabProps> = ({
     setRefineInProgress(true);
     setRefineError(null);
     try {
-      const currentRevision = proposal.spec.revision ?? 0;
-      const nextRevision = currentRevision + 1;
       await k8sPatch({
         data: [
-          {
-            op: proposal.spec.revision === undefined ? 'add' : 'replace',
-            path: '/spec/revision',
-            value: nextRevision,
-          },
           {
             op: proposal.spec.revisionFeedback === undefined ? 'add' : 'replace',
             path: '/spec/revisionFeedback',
@@ -1465,7 +1458,6 @@ const VerificationTab: React.FC<{
         </StackItem>
       )}
 
-      <AdapterComponents components={latestVerificationResult?.components} />
     </Stack>
   );
 };

@@ -7,7 +7,6 @@ import {
   LightspeedProposal,
   LightspeedProposalApproval,
   LightspeedProposalApprovalModel,
-  LightspeedProposalModel,
   ProposalCondition,
   ProposalPhase,
 } from '../models/proposal';
@@ -43,20 +42,6 @@ export function useStageApproval(
       setInProgress(true);
       setError(null);
       try {
-        if (options?.maxAttempts !== undefined && options.maxAttempts > 0) {
-          await k8sPatch({
-            data: [
-              {
-                op: proposal.spec.maxAttempts === undefined ? 'add' : 'replace',
-                path: '/spec/maxAttempts',
-                value: options.maxAttempts,
-              },
-            ],
-            model: LightspeedProposalModel,
-            resource: proposal,
-          });
-        }
-
         const patches = buildApprovalPatch(approval, stageType, false, options);
         await k8sPatch({
           data: patches,

@@ -19,7 +19,7 @@ export function getStageStatus(
 ): 'approved' | 'denied' | 'pending' {
   const stage = findStage(approval, stageType);
   if (!stage) return 'pending';
-  return stage.denied ? 'denied' : 'approved';
+  return stage.decision === 'Denied' ? 'denied' : 'approved';
 }
 
 const TERMINAL_PHASES = new Set<ProposalPhase>(['Completed', 'Failed', 'Denied', 'Escalated']);
@@ -59,10 +59,10 @@ export function buildApprovalPatch(
   approval: LightspeedProposalApproval | undefined,
   stageType: ApprovalStageType,
   denied: boolean,
-  options?: { option?: number; agent?: string },
+  options?: { maxAttempts?: number; option?: number; agent?: string },
 ): PatchOp[] {
   const stage: ApprovalStage = { type: stageType };
-  if (denied) stage.denied = true;
+  if (denied) stage.decision = 'Denied';
 
   switch (stageType) {
     case 'Analysis':
@@ -72,6 +72,7 @@ export function buildApprovalPatch(
       stage.execution = {
         ...(options?.option !== undefined && { option: options.option }),
         ...(options?.agent && { agent: options.agent }),
+        ...(options?.maxAttempts !== undefined && options.maxAttempts > 0 && { maxAttempts: options.maxAttempts }),
       };
       break;
     case 'Verification':

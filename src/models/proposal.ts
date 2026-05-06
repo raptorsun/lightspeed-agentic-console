@@ -136,7 +136,7 @@ export type EscalationApproval = {
 
 export type ApprovalStage = {
   type: ApprovalStageType;
-  denied?: boolean;
+  decision?: 'Approved' | 'Denied';
   analysis?: AnalysisApproval;
   execution?: ExecutionApproval;
   verification?: VerificationApproval;
@@ -311,7 +311,7 @@ export type RemediationOption = {
 export type AnalysisStepStatus = {
   phase?: StepPhase;
   selectedOption?: number;
-  observedRevision?: number;
+  observedGeneration?: number;
   sandbox?: SandboxInfo;
   conditions?: ProposalCondition[];
   results?: StepResultRef[];
@@ -392,8 +392,6 @@ export type LightspeedProposal = {
     analysis?: ProposalStep;
     execution?: ProposalStep;
     verification?: ProposalStep;
-    maxAttempts?: number;
-    revision?: number;
     revisionFeedback?: string;
   };
   status?: ProposalStatus;
@@ -435,7 +433,6 @@ export type ExecutionResultCR = {
   retryIndex: number;
   actionsTaken?: ExecutionActionTaken[];
   verification?: ExecutionVerification;
-  components?: AdapterComponent[];
   sandbox?: SandboxInfo;
   failureReason?: string;
   status?: ResultStatus;
@@ -450,7 +447,6 @@ export type VerificationResultCR = {
   retryIndex: number;
   checks?: VerificationCheck[];
   summary?: string;
-  components?: AdapterComponent[];
   sandbox?: SandboxInfo;
   failureReason?: string;
   status?: ResultStatus;
