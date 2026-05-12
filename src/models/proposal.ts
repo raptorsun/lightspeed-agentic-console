@@ -1,7 +1,7 @@
 // TODO: Auto-generate these types from the CRD OpenAPI schema using
 // openapi-typescript against the cluster's /openapi/v3/apis/agentic.openshift.io/v1alpha1
 // endpoint, or from the CRD YAML files in lightspeed-operator/config/crd/bases/.
-import { K8sModel } from '@openshift-console/dynamic-plugin-sdk';
+import { K8sModel, K8sResourceCommon } from '@openshift-console/dynamic-plugin-sdk';
 
 export const LightspeedProposalModel: K8sModel = {
   apiGroup: 'agentic.openshift.io',
@@ -29,6 +29,46 @@ export const LightspeedAgentModel: K8sModel = {
   namespaced: false,
   label: 'Agent',
   labelPlural: 'Agents',
+};
+
+export const LightspeedAgentGVK = {
+  group: LightspeedAgentModel.apiGroup,
+  kind: LightspeedAgentModel.kind,
+  version: LightspeedAgentModel.apiVersion,
+};
+
+export const LightspeedLLMProviderModel: K8sModel = {
+  apiGroup: 'agentic.openshift.io',
+  apiVersion: 'v1alpha1',
+  kind: 'LLMProvider',
+  plural: 'llmproviders',
+  abbr: 'LLP',
+  namespaced: false,
+  label: 'LLM Provider',
+  labelPlural: 'LLM Providers',
+};
+
+export const LightspeedLLMProviderGVK = {
+  group: LightspeedLLMProviderModel.apiGroup,
+  kind: LightspeedLLMProviderModel.kind,
+  version: LightspeedLLMProviderModel.apiVersion,
+};
+
+export const LightspeedApprovalPolicyModel: K8sModel = {
+  apiGroup: 'agentic.openshift.io',
+  apiVersion: 'v1alpha1',
+  kind: 'ApprovalPolicy',
+  plural: 'approvalpolicies',
+  abbr: 'LAP',
+  namespaced: false,
+  label: 'ApprovalPolicy',
+  labelPlural: 'ApprovalPolicies',
+};
+
+export const LightspeedApprovalPolicyGVK = {
+  group: LightspeedApprovalPolicyModel.apiGroup,
+  kind: LightspeedApprovalPolicyModel.kind,
+  version: LightspeedApprovalPolicyModel.apiVersion,
 };
 
 export const LightspeedProposalApprovalModel: K8sModel = {
@@ -582,3 +622,118 @@ export const getRiskColor = (risk?: string): 'green' | 'orange' | 'red' | 'grey'
       return 'grey';
   }
 };
+
+export type LLMProviderType = 'Anthropic' | 'GoogleCloudVertex' | 'OpenAI' | 'AzureOpenAI' | 'AWSBedrock';
+
+export type SecretRef = {
+  name: string;
+};
+
+export type AnthropicConfig = {
+  credentialsSecret: SecretRef;
+  url?: string;
+};
+
+export type GoogleCloudVertexConfig = {
+  credentialsSecret: SecretRef;
+  projectID: string;
+  region: string;
+  url?: string;
+};
+
+export type OpenAIConfig = {
+  credentialsSecret: SecretRef;
+  url?: string;
+};
+
+export type AzureOpenAIConfig = {
+  credentialsSecret: SecretRef;
+  endpoint: string;
+  apiVersion?: string;
+  url?: string;
+};
+
+export type AWSBedrockConfig = {
+  credentialsSecret: SecretRef;
+  region: string;
+  url?: string;
+};
+
+export type LLMProviderSpec = {
+  type: LLMProviderType;
+  anthropic?: AnthropicConfig;
+  googleCloudVertex?: GoogleCloudVertexConfig;
+  openAI?: OpenAIConfig;
+  azureOpenAI?: AzureOpenAIConfig;
+  awsBedrock?: AWSBedrockConfig;
+};
+
+export type LLMProviderResource = {
+  apiVersion: string;
+  kind: string;
+  metadata: {
+    name: string;
+    creationTimestamp?: string;
+    uid?: string;
+  };
+  spec: LLMProviderSpec;
+};
+
+export type ApprovalMode = 'Automatic' | 'Manual';
+
+export type SandboxStepName = 'Analysis' | 'Execution' | 'Verification' | 'Escalation';
+
+export type ApprovalPolicyStage = {
+  name: SandboxStepName;
+  approval: ApprovalMode;
+};
+
+export type ApprovalPolicySpec = {
+  stages?: ApprovalPolicyStage[];
+  maxAttempts?: number;
+  maxConcurrentProposals?: number;
+};
+
+export type ApprovalPolicyResource = {
+  apiVersion: string;
+  kind: string;
+  metadata: {
+    name: string;
+    creationTimestamp?: string;
+    uid?: string;
+    resourceVersion?: string;
+  };
+  spec: ApprovalPolicySpec;
+};
+
+export type AgentTimeouts = {
+  analysisSeconds?: number;
+  executionSeconds?: number;
+  verificationSeconds?: number;
+  chatSeconds?: number;
+};
+
+export type AgentSpec = {
+  llmProvider: { name: string };
+  model: string;
+  timeouts?: AgentTimeouts;
+  maxTurns?: number;
+};
+
+export type AgentResource = {
+  apiVersion: string;
+  kind: string;
+  metadata: {
+    name: string;
+    creationTimestamp?: string;
+    uid?: string;
+  };
+  spec: AgentSpec;
+  status?: {
+    conditions?: ProposalCondition[];
+  };
+};
+
+export type LLMProviderK8s = LLMProviderResource & K8sResourceCommon;
+export type ApprovalPolicyK8s = ApprovalPolicyResource & K8sResourceCommon;
+export type AgentK8s = AgentResource & K8sResourceCommon;

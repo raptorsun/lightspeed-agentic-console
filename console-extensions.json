@@ -15,6 +15,14 @@
     }
   },
   {
+    "type": "console.page/route",
+    "properties": {
+      "exact": true,
+      "path": "/lightspeed/configuration",
+      "component": { "$codeRef": "ConfigurationPage" }
+    }
+  },
+  {
     "type": "console.navigation/href",
     "properties": {
       "id": "lightspeedproposals",
