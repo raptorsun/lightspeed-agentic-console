@@ -58,7 +58,7 @@
     "@cypress/webpack-preprocessor": "^7.0.2",
     "@testing-library/react-hooks": "^8.0.1",
     "@types/dompurify": "^3.2.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.0",
     "@types/react": "^17.0.37",
     "babel-loader": "^10.1.0",
     "cypress": "^15.11.0",
