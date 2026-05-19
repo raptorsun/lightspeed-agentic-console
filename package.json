@@ -92,7 +92,8 @@
     "description": "AI-driven proposals UI for OpenShift cluster operations",
     "exposedModules": {
       "ProposalListPage": "./components/proposals/ProposalListPage",
-      "ProposalDetailPage": "./components/proposals/ProposalDetailPage"
+      "ProposalDetailPage": "./components/proposals/ProposalDetailPage",
+      "ConfigurationPage": "./components/configuration/ConfigurationPage"
     },
     "dependencies": {
       "@console/pluginAPI": "^4.21.0"

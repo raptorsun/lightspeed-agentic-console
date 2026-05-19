@@ -1,11 +1,10 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import {
   K8sResourceCommon,
   ListPageBody,
   ListPageFilter,
-  ListPageHeader,
   ResourceLink,
   RowFilter,
   RowProps,
@@ -16,8 +15,8 @@ import {
   useListPageFilter,
   VirtualizedTable,
 } from '@openshift-console/dynamic-plugin-sdk';
-import { EmptyState, EmptyStateBody, Label } from '@patternfly/react-core';
-import { SearchIcon } from '@patternfly/react-icons';
+import { Button, EmptyState, EmptyStateBody, Flex, FlexItem, Label, Title } from '@patternfly/react-core';
+import { CogIcon, SearchIcon } from '@patternfly/react-icons';
 
 import {
   derivePhaseFromConditions,
@@ -121,6 +120,7 @@ const FilteredEmptyMsg: React.FC = () => {
 
 const ProposalListPage: React.FC = () => {
   const { t } = useTranslation('plugin__lightspeed-agentic-console-plugin');
+  const history = useHistory();
 
   const [proposals, loaded, loadError] = useK8sWatchResource<ProposalResource[]>({
     groupVersionKind: LightspeedProposalGVK,
@@ -132,7 +132,22 @@ const ProposalListPage: React.FC = () => {
 
   return (
     <>
-      <ListPageHeader title={t('AI Hub')} />
+      <div className="ols-plugin__list-page-header">
+        <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
+          <FlexItem>
+            <Title headingLevel="h1">{t('AI Hub')}</Title>
+          </FlexItem>
+          <FlexItem>
+            <Button
+              variant="plain"
+              aria-label={t('Configuration')}
+              onClick={() => history.push('/lightspeed/configuration')}
+            >
+              <CogIcon />
+            </Button>
+          </FlexItem>
+        </Flex>
+      </div>
       <ListPageBody>
         <ListPageFilter
           data={data}
