@@ -40,7 +40,7 @@
     "marked": "^17.0.5",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "react-i18next": "^11.7.3",
+    "react-i18next": "^17.0.0",
     "react-router": "5.3.x",
     "react-router-dom": "5.3.x",
     "react-router-dom-v5-compat": "^6.11.2",
