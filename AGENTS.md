@@ -229,3 +229,7 @@ See [Console Plugin SDK README](https://github.com/openshift/console/tree/master
 - **Add translations?** Use `t()` function, run `yarn i18n` after
 - **Test changes?** Run locally with `yarn start` + `yarn start-console`, add Cypress tests
 - **Deploy?** Build image, push to registry, install via Helm chart
+
+## Risk Levels
+
+Risk levels are enforced via a PreToolUse hook before every Jira create/edit call. The rubric and classification examples live in [lightspeed-team-harness/hooks/risk-rubric.md](https://github.com/openshift/lightspeed-team-harness/blob/main/hooks/risk-rubric.md).
