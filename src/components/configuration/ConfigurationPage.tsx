@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -19,7 +19,7 @@ import './configuration.css';
 
 const ConfigurationPage: React.FC = () => {
   const { t } = useTranslation('plugin__lightspeed-agentic-console-plugin');
-  const history = useHistory();
+  const history = useNavigate();
   const [activeTab, setActiveTab] = React.useState<string | number>(0);
 
   return (
@@ -30,7 +30,7 @@ const ConfigurationPage: React.FC = () => {
             to="#"
             onClick={(e) => {
               e.preventDefault();
-              history.push('/lightspeed/proposals');
+              navigate('/lightspeed/proposals');
             }}
           >
             {t('AI Hub')}

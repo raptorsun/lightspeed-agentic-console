@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import {
   K8sResourceCommon,
   ListPageBody,
@@ -132,7 +132,7 @@ const FilteredEmptyMsg: React.FC = () => {
 
 const ProposalListPage: React.FC = () => {
   const { t } = useTranslation('plugin__lightspeed-agentic-console-plugin');
-  const history = useHistory();
+  const history = useNavigate();
 
   const [proposals, loaded, loadError] = useK8sWatchResource<ProposalResource[]>({
     groupVersionKind: LightspeedProposalGVK,
@@ -156,7 +156,7 @@ const ProposalListPage: React.FC = () => {
             <Button
               variant="plain"
               aria-label={t('Configuration')}
-              onClick={() => history.push('/lightspeed/configuration')}
+              onClick={() => navigate('/lightspeed/configuration')}
             >
               <CogIcon />
             </Button>
