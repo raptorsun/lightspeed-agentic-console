@@ -1,0 +1,76 @@
+# CodeRabbit configuration — lightspeed-agentic-console
+# Docs: https://docs.coderabbit.ai/reference/configuration
+language: "en-US"
+early_access: true
+tone_instructions: >-
+  Be direct and concise. Focus on bugs, security issues, and correctness.
+  Skip praise and pleasantries.
+
+reviews:
+  profile: chill
+  request_changes_workflow: true
+  pre_merge_checks:
+    override_requested_reviewers_only: true
+
+  auto_review:
+    enabled: true
+    base_branches:
+      - 'main'
+    drafts: false
+    ignore_title_keywords:
+      - 'WIP'
+      - 'DO NOT MERGE'
+
+  path_filters:
+    - '!**/node_modules/**'
+    - '!**/dist/**'
+    - '!**/*.min.js'
+    - '!**/yarn.lock'
+
+  high_level_summary: true
+  high_level_summary_in_walkthrough: true
+  collapse_walkthrough: true
+  review_status: true
+  commit_status: true
+  sequence_diagrams: true
+  poem: false
+  in_progress_fortune: false
+  suggested_labels: false
+  suggested_reviewers: false
+  estimate_code_review_effort: false
+  related_prs: false
+  enable_prompt_for_ai_agents: true
+
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+
+  tools:
+    eslint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    semgrep:
+      enabled: true
+    ast-grep:
+      essential_rules: true
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "**/AGENTS.md"
+      - "**/CLAUDE.md"
+      - "**/CONTRIBUTING.md"
+  issues:
+    scope: "auto"
+  jira:
+    usage: "auto"
+  pull_requests:
+    scope: "auto"
+
+chat:
+  auto_reply: true
+  art: false
